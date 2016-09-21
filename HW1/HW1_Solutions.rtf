@@ -3,10 +3,10 @@ Problem 1:
 (a)
 	Since the ISA has only one instruction, there's no need to assign any bits to the opcode. The memory is 4GB large, so each operand need 32 bits to be encoded. 
 	Therefore, the minimum number of total bits is 0 + 32*3 = 96.
-				-------------------------------------------------
-	subleq:		|		a 		|		b 		|		c		|
-				-------------------------------------------------
-				95			  64 63   		  32 31				0
+		-------------------------------------------------
+	subleq:	|	a 	|	b 	|	c	|
+		-------------------------------------------------
+		95	      64 63   	      32 31		0
 
 (b)
 	It has 3-Address ISA.
@@ -17,25 +17,25 @@ Problem 1:
 	-> M[A] = 7, 	M[B] = -9, 	M[C] = 4, 	M[D] = 3, 	Jump to L0
 
 	L0: subleq	C, C, L1		
-	-> M[A] = 7, 	M[B] = -9, 	M[C] = (0), M[D] = 3, 	Jump to L1
+	-> M[A] = 7, 	M[B] = -9, 	M[C] = (0), 	M[D] = 3, 	Jump to L1
 
 	L1: subleq 	D, D, L2
-	-> M[A] = 7, 	M[B] = -9, 	M[C] = 0, 	M[D] = (0), Jump to L2
+	-> M[A] = 7, 	M[B] = -9, 	M[C] = 0, 	M[D] = (0), 	Jump to L2
 
 	L2: subleq 	A, B, L6
-	-> M[A] = (16),	 M[B] = -9, M[C] = 0, 	M[D] = 0, 	Jump to next
+	-> M[A] = (16),	 M[B] = -9, 	M[C] = 0, 	M[D] = 0, 	Jump to next
 
 	L3: subleq 	D, B, L4
-	-> M[A] = 16, 	M[B] = -9, 	M[C] = 0, 	M[D] = (9), Jump to next
+	-> M[A] = 16, 	M[B] = -9, 	M[C] = 0, 	M[D] = (9), 	Jump to next
 
 	L4: subleq 	C, D, L5
-	-> M[A] = 16, 	M[B] = -9, 	M[C] = (-9), M[D] = 9, 	Jump to L5
+	-> M[A] = 16, 	M[B] = -9, 	M[C] = (-9), 	M[D] = 9, 	Jump to L5
 
 	L5: subleq 	D, D, L9
-	-> M[A] = 16, 	M[B] = -9, 	M[C] = -9, 	M[D] = (0), Jump to L9
+	-> M[A] = 16, 	M[B] = -9, 	M[C] = -9, 	M[D] = (0), 	Jump to L9
 
 	L9: //Rest of code
-	-> M[A] = 16, 	M[B] = -9, 	M[C] = -9, 	M[D] = (0), End
+	-> M[A] = 16, 	M[B] = -9, 	M[C] = -9, 	M[D] = (0), 	End
 
 	In general, this snippet of code does the following operation:
 	If M[A] > M[B], M[C] <- M[B]. If M[A] <= M[B], M[C] <- M[A]-M[B]. D is a temporary memory location.
@@ -43,24 +43,24 @@ Problem 1:
 (d) 
 	L0:	subleq 	M1, M1, L1		// M1 <- 0
 	L1:	subleq 	M2, M2, L2		// M2 <- 0
-	L2: subleq 	M2, M0, L3		// M2 <- -M0
-	L3: subleq	M1, M2, L4		// M1 <- M1+M0
+	L2: 	subleq 	M2, M0, L3		// M2 <- -M0
+	L3: 	subleq	M1, M2, L4		// M1 <- M1+M0
 	L4:	subleq	M0, C1, L5		// M0 <- M0-1
 	L5:	subleq 	M2, M2, L6		// M2 <- 0
-	L6: subleq 	M2, M0, L7		// M2 <- -M0
-	L7: subleq 	M2, C0, L3		// if M0 >= 0, loop; else, exit
-	L8: exit					// exit
+	L6: 	subleq 	M2, M0, L7		// M2 <- -M0
+	L7: 	subleq 	M2, C0, L3		// if M0 >= 0, loop; else, exit
+	L8: 	exit				// exit
 
 	// This will do an extra loop while M0 = 0;
 
 	Or
 
 	L0:	subleq 	M2, M2, L1		// M2 <- 0
-	L1: subleq	M2, M0, L2		// M2 <- M2-M0
+	L1: 	subleq	M2, M0, L2		// M2 <- M2-M0
 	L2:	subleq	M0, C1, L4		// M0 <- M0-1
 	L3:	subleq	M1, M1, L1		// if M0 > 0, loop; else, end loop
-	L4: subleq 	M1, M2, L5		// M1 <- -M2
-	L5: exit					// exit
+	L4: 	subleq 	M1, M2, L5		// M1 <- -M2
+	L5: 	exit				// exit
 
 	// This is much more efficient. The total number of steps is N*3+1.
 
@@ -70,13 +70,13 @@ Problem 2:
 
 Note:
 The instruction format in HW pdf is different from which in one of the reference pdf. In this solution, the format we used was referred to the "BASIC INSTRUCTION FORMATS" table in the references as following:
-			-----------------------------------------------------
-		R	|	op 	| 	rs 	| 	rt 	| 	rd 	| 	sh 	| 	func	|
-			-----------------------------------------------------
-		I	|	op 	| 	rs 	| 	rt 	| 			imm				|
-			-----------------------------------------------------
-		J	|	op 	|					addr 					|
-			-----------------------------------------------------
+		-------------------------------------------------
+	R	|  op 	|  rs 	|  rt 	|  rd 	|  sh 	| func	|
+		-------------------------------------------------
+	I	|  op 	|  rs 	|  rt 	| 	  imm		|
+		-------------------------------------------------
+	J	|  op 	|		addr 			|
+		-------------------------------------------------
 For examplem, instruction ADD: 	
 	rd = rs + rt 	-> 	add rs, rt, rd
 
@@ -94,27 +94,27 @@ For examplem, instruction ADD:
 
 (c)
 	// MIPS uses Big-endian
-	lhu		rs, rt, imm			// load higher 2 bytes to rt 
+	lhu	rs, rt, imm			// load higher 2 bytes to rt 
 	addi 	rs, rs, 2			// addr + 2
-	lhu		rs, rx, imm			// load lower 2 bytes to rx
+	lhu	rs, rx, imm			// load lower 2 bytes to rx
 	subi 	rs, rs, 2
-	sll		rt, rt, 16			// rt shift left 16 bits (2 bytes)
-	or 		rt, rx, rt 			// rt <- rt|rx
+	sll	rt, rt, 16			// rt shift left 16 bits (2 bytes)
+	or 	rt, rx, rt 			// rt <- rt|rx
 
 	OR
 
-	lhu		rs, rt, imm			// load higher 2 bytes to rt 
-	lhu		rs, rx, imm+2		// load lower 2 bytes to rx
-	sll		rt, rt, 16			// rt shift left 16 bits (2 bytes)
-	or 		rt, rx, rt 			// rt <- rt|rx
+	lhu	rs, rt, imm			// load higher 2 bytes to rt 
+	lhu	rs, rx, imm+2			// load lower 2 bytes to rx
+	sll	rt, rt, 16			// rt shift left 16 bits (2 bytes)
+	or 	rt, rx, rt 			// rt <- rt|rx
 
 (d)
 	// In Jump instruction, addr is a 26 bits immediate. Let immediate haddr = 16b'(addr >> 16), laddr = 16b'(addr & 0xFF).
-	ori 	$0,	rx, haddr		// rx <- haddr
-	sll		rx, rx, 16			// rx <- {haddr, 16b'0}
-	ori 	$0,	rx, laddr		// rx <- {haddr, laddr}=addr
-	sll		rx, rx, 2			// rx <- {addr, 2b'0}=addr<<2
-	jr 		rx
+	ori 	$0, rx, haddr			// rx <- haddr
+	sll	rx, rx, 16			// rx <- {haddr, 16b'0}
+	ori 	$0, rx, laddr			// rx <- {haddr, laddr}=addr
+	sll	rx, rx, 2			// rx <- {addr, 2b'0}=addr<<2
+	jr 	rx
 
 	// TO DO:  Jump PC = PC&0xF0000000|(addr<<2). However, there's no instructions to get the value of PC. So the higher 4 bits of PC is missing. Instruction j is simply equivalent to jal, if it's ok to ignore $ra,
 
