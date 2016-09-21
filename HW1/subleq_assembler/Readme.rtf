@@ -1,0 +1,12 @@
+https://esolangs.org/wiki/Subleq
+
+Subleq assembler
+
+	sqasm.exe < hw.sq > hw
+
+will read hw.sq file and produce hw text file. If hw.sq is the first "hello world" example, the command also prints "UNRESOLVED: [OUT:4]" which tells that label OUT was not resolved - it is OK because OUT is the default name for the output register for the emulator.
+
+
+Subleq emulator
+
+	sqrun.exe hw
