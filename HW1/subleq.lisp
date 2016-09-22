@@ -1,4 +1,5 @@
 ;;;; a subleq interpreter
+;;;; an online ecl: http://colabv6.dan.co.jp/lleval.html
 (defparameter *mem* (make-array 4))
 (eval-when (:load-toplevel :eval-toplevel :execute)
   (defmacro subleq (a b c)
