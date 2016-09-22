@@ -1,0 +1,98 @@
+Problem 1
+(a) If all we need is only this subleq instruction, I think we can omit 
+
+fields like op-code or funct to indicate which instruction is used. It 
+
+also doesn't need to have a shamt field since no sll instruction and no 
+
+immediate field for arithmetic instructions. So we can use minimum only 
+
+three 5-bits, totally 15 bits, since 4GB RAM is 2^32 address space, and we 
+
+need 2^5 =32 bits to represent an address. 
+The design is:
+subleq a, b, c:
+|a 5-bit|b 5-bit|c 5-bit|
+(b)
+It's a 3-Address RSA, because it has operands a, b, and c.
+It's a memory-memory RSA, because all three operands represent data 
+
+address of memory.
+(c)
+Mem[A]=16
+Mem[B]=-9
+Mem[C]=16
+Mem[D]=0
+(16 -9 -9 0)
+(d)
+L0: subleq M2, M2, L1
+L1: subleq M2, M0, L2
+L2: subleq M0, C1, L4
+L3: subleq M2, M0, L2
+L4: subleq M1, M1, L5
+L5: subleq M1, M2, Lend
+Lend: exit
+
+Problem 2
+In the Problem 2, the parameters' sequence is the same as the mip-ref, but 
+
+not the question.
+(a)
+//add rd, rs, rt
+sub rx, rx, rx
+sub rx, rt, rx
+sub rd, rx, rs
+(b)
+//and rd, rs, rt
+nor rs, rs, rs
+nor rt, rt, rt
+nor rd, rt, rs
+nor rs, rs, rs
+nor rt, rt, rt
+(c)
+//lw rt, rs, imm : R[rt] <- Mem[ {SignExtendimm} + R[rs] ]
+addiu rx, rs, imm
+lb rt, rx, 0
+sll rt, rt, 8
+lb rt, rx, 1
+sll rt, rt, 8
+lb rt, rx, 2
+sll rt, rt, 8
+lb rt, rx, 3
+(d)
+//j addr, should be seprated as imm1:imm2
+and rx, $0, rx
+lui rx, imm1
+ori rx, rx, imm2
+jr rx
+
+Problem 3
+(a)
+3-address:
+ADD Rd, Rs, Rn // Add contents of Rn to contents of Rs. Place
+result in Rd.
+2-address:
+AND Rd, Rs // Rd:= Rd AND Rs
+
+(b)
+Supported:
+1. Indexed: 
+Load:
+LDRB R2, [R0, R7] // Load into R2 the byte found at the address formed by 
+
+adding R7 to R0.
+Store:
+STR R3, [R2, R6] // Store word in R3 at the address formed by adding R6 to 
+
+R2.
+2. Displayed/Based: 
+Load:
+LDR R2, [R5, #116] // Load into R2 the word found at the address formed by 
+
+adding 116 to R5.
+Store:
+STRB R1, [R0,#13] // Store the lower 8 bits of R1 at the address formed by 
+
+adding 13 to R0.
+
+Others are not supported.
