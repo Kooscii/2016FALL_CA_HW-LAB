@@ -116,7 +116,32 @@ For examplem, instruction ADD:
 	sll	rx, rx, 2			// rx <- {addr, 2b'0}=addr<<2
 	jr 	rx
 
-	// TO DO:  Jump PC = PC&0xF0000000|(addr<<2). However, there's no instructions to get the value of PC. So the higher 4 bits of PC is missing. Instruction j is simply equivalent to jal, if it's ok to ignore $ra,
+	// TO DO:  Jump PC = PC&0xF0000000|(addr<<2). However, there's no instructions to get the value of PC. So the higher 4 bits of PC is missing. Instruction j is simply equivalent to jal, if it's ok to ignore $ra.
 
 
 Problem 3:
+
+(a)
+	3-address:	ADD Rd, Rs, Rn
+	2-address:	AND Rd, Rs
+
+(b)
+	// TO DO: quite unsure about this answer
+
+	Absolute:			// unsupported ??
+	LDR 	Rd, [Rb, #Imm]		// It can emulate an absolute addressing instruction if Rb = 0. But the #Imm is only 5 bits long.
+
+	Register Indirect:		// unsupported ??
+	LDR 	Rd, [Rb, 0]		// It can emulate an register indirect addressing instruction if #Imm = 0.
+
+	Displaced/Based:
+	LDR 	Rd, [Rb, #Imm]		// #Imm is a 5 bits offset, $rd <- Mem[$rb + offset]
+
+	Indexed:
+	LDR 	Rd, [Rb, Ro]		// $rd <- Mem[$rb + $ro]
+
+	Memory Indirect:
+	unsupported
+
+	Auto-increment:
+	LDR 	Rd, [Rb, #Imm]		// #Imm is the increment. It's a pre-indexed addressing, which is different from the auto-increment addressing discussed in class. 
