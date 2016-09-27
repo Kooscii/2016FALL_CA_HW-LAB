@@ -1,3 +1,6 @@
+by677	Bo Yao
+tg1553	Tianyu Gu
+
 Problem 1:
 
 (a)
@@ -41,20 +44,6 @@ Problem 1:
 	If M[A] > M[B], M[C] <- M[B]. If M[A] <= M[B], M[C] <- M[A]-M[B]. D is a temporary memory location.
 
 (d) 
-	L0:	subleq 	M1, M1, L1		// M1 <- 0
-	L1:	subleq 	M2, M2, L2		// M2 <- 0
-	L2: 	subleq 	M2, M0, L3		// M2 <- -M0
-	L3: 	subleq	M1, M2, L4		// M1 <- M1+M0
-	L4:	subleq	M0, C1, L5		// M0 <- M0-1
-	L5:	subleq 	M2, M2, L6		// M2 <- 0
-	L6: 	subleq 	M2, M0, L7		// M2 <- -M0
-	L7: 	subleq 	M2, C0, L3		// if M0 >= 0, loop; else, exit
-	L8: 	exit				// exit
-
-	// This will do an extra loop while M0 = 0;
-
-	Or
-
 	L0:	subleq 	M2, M2, L1		// M2 <- 0
 	L1: 	subleq	M2, M0, L2		// M2 <- M2-M0
 	L2:	subleq	M0, C1, L4		// M0 <- M0-1
@@ -68,8 +57,8 @@ Problem 1:
 
 Problem 2:
 
-Note:
-The instruction format in HW pdf is different from which in one of the reference pdf. In this solution, the format we used was referred to the "BASIC INSTRUCTION FORMATS" table in the references as following:
+	Note:
+	The instruction format in HW pdf is different from which in one of the reference pdf. In this solution, the format we used was referred to the "BASIC INSTRUCTION FORMATS" table in the references as following:
 		-------------------------------------------------
 	R	|  op 	|  rs 	|  rt 	|  rd 	|  sh 	| func	|
 		-------------------------------------------------
@@ -77,8 +66,10 @@ The instruction format in HW pdf is different from which in one of the reference
 		-------------------------------------------------
 	J	|  op 	|		addr 			|
 		-------------------------------------------------
-For examplem, instruction ADD: 	
-	rd = rs + rt 	-> 	add rs, rt, rd
+	For example, instruction ADD and XORI: 	
+		rd = rs + rt 	-> 	add rs, rt, rd
+		rt = rs xor 1	->	xori rs, rt, 1
+
 
 (a)
 	sub 	rx, rx, rx			// rx <- 0
@@ -88,7 +79,7 @@ For examplem, instruction ADD:
 (b)
 	xori 	rt, rt, 1			// ~rt
 	xori 	rs, rs, 1			// ~rs
-	nor 	rt, rs, rd 			// rd <- ~(~rt|~rs) = rt&rs
+	nor 	rt, rs, rd 			// rd <- ~(~rt|~rs) = rt & rs
 	xori 	rt, rt, 1			// rt
 	xori 	rs, rs, 1			// rs
 
@@ -109,14 +100,14 @@ For examplem, instruction ADD:
 	or 	rt, rx, rt 			// rt <- rt|rx
 
 (d)
-	// In Jump instruction, addr is a 26 bits immediate. Let immediate haddr = 16b'(addr >> 16), laddr = 16b'(addr & 0xFF).
-	ori 	$0, rx, haddr			// rx <- haddr
+	// In Jump instruction, addr is a 26 bits immediate. Let's assume immediate haddr = 16b'(addr >> 16), laddr = 16b'(addr & 0xFF).
+	ori 	0, rx, haddr			// rx <- haddr
 	sll	rx, rx, 16			// rx <- {haddr, 16b'0}
-	ori 	$0, rx, laddr			// rx <- {haddr, laddr}=addr
+	ori 	0, rx, laddr			// rx <- {haddr, laddr}=addr
 	sll	rx, rx, 2			// rx <- {addr, 2b'0}=addr<<2
 	jr 	rx
 
-	// TO DO:  Jump PC = PC&0xF0000000|(addr<<2). However, there's no instructions to get the value of PC. So the higher 4 bits of PC is missing. Instruction j is simply equivalent to jal, if it's ok to ignore $ra.
+	// TO DO:  Jump PC = PC&0xF0000000|(addr<<2). However, there's no instructions to get the value of PC. So the higher 4 bits of PC is missing. Instruction j is simply equivalent to jal, if it's ok to ignore ra.
 
 
 Problem 3:
@@ -126,22 +117,31 @@ Problem 3:
 	2-address:	AND Rd, Rs
 
 (b)
-	// TO DO: quite unsure about this answer
+	Supported:
 
-	Absolute:			// unsupported ??
-	LDR 	Rd, [Rb, #Imm]		// It can emulate an absolute addressing instruction if Rb = 0. But the #Imm is only 5 bits long.
+	Displaced/Based
+	LDR 	Rd, [Rb, #Imm]		// #Imm is a 5 bits offset, rd <- Mem[rb + offset]
 
-	Register Indirect:		// unsupported ??
-	LDR 	Rd, [Rb, 0]		// It can emulate an register indirect addressing instruction if #Imm = 0.
+	Indexed
+	LDR 	Rd, [Rb, Ro]		// rd <- Mem[rb + ro]
 
-	Displaced/Based:
-	LDR 	Rd, [Rb, #Imm]		// #Imm is a 5 bits offset, $rd <- Mem[$rb + offset]
-
-	Indexed:
-	LDR 	Rd, [Rb, Ro]		// $rd <- Mem[$rb + $ro]
-
-	Memory Indirect:
-	unsupported
-
-	Auto-increment:
+	Auto-increment
 	LDR 	Rd, [Rb, #Imm]		// #Imm is the increment. It's a pre-indexed addressing, which is different from the auto-increment addressing discussed in class. 
+
+	Unsupported:
+	Memory Indirect
+
+	Absolute
+	// We can emulate an absolute addressing instruction by using the displaced/based addressing instruction with Rb pre-assigned to 0. But the #Imm is only 5 bits long, which means we can only access to the memory locating from 0 to 2^5.
+	// LDR 	Rd, [Rb, #Imm]		// Since Rd = 0, Rd <- Mem[#Imm]
+	// STR	Rd, [Rb, #Imm]		// Mem[#Imm] <- Rd
+
+	Register Indirect
+	// The same as above, the register indirect instruction can be emulated.
+	// LDR 	Rd, [Rb, 0]			// Rd <- Mem[Rb]
+	// STR	Rd, [Rb, 0]			// Mem[Rb] <- Rd
+
+	
+
+	
+	
