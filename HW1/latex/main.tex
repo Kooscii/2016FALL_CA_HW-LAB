@@ -1,0 +1,229 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage{array}
+\usepackage{multicol}
+\usepackage{indentfirst}
+\usepackage{tabularx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\geometry{left=1.25in,right=1.25in,top=1in,bottom=1.25in}
+
+\lhead{Assignment \#1} 
+\chead{} 
+\rhead{Bo Yao, by677 \& Tianyu Gu, tg1553}
+\renewcommand{\headrulewidth}{0.4pt} 
+
+\begin{document}
+%Header-Make sure you update this information!!!!
+
+\noindent
+\LARGE\textbf{Assignment \#1} \hfill \large Bo Yao, by677\\ 
+\normalsize CS-GY 6133 \hfill Tianyu Gu, tg1553\\
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	Solution 1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Solution 1}
+
+%%%	sub a %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(a)}
+\noindent
+Since the ISA has only one instruction, there's no need to assign any bits to the opcode. The memory is 4GB large, so each operand need 32 bits to be encoded. \\[5pt]
+Therefore, the minimum number of total bits is 0 + 32*3 = 96.
+\noindent
+\begin{center}
+  \begin{tabular}{m{2cm}|*{5}{c}|*{5}{c}|*{5}{c}|}
+      \cline{2-16}
+      $subleq$: &&& $a$ &&&&& $b$ &&&&& $c$ &&\\
+      \cline{2-16}
+      \multicolumn{1}{l}{} & \multicolumn{1}{l}{95} &&&& \multicolumn{1}{r}{64} & \multicolumn{1}{l}{63} &&&& \multicolumn{1}{r}{32} & \multicolumn{1}{l}{31} &&&& \multicolumn{1}{r}{0}\\
+  \end{tabular}
+\end{center}
+
+%%%	sub b %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(b)}
+It is 3-Address ISA.\\[5pt]
+\indent It is a memory-memory ISA.\\
+
+%%%	sub c %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(c)}
+$initial$:\\
+$\rightarrow$ $M[A]$ = 7, $M[B]$ = -9, $M[C]$ = 4, $M[D]$ = 3, Jump to $L_0$.\\[7pt]
+\indent $L_0$: subleq\quad $C,\ C,\ L_1$\\
+$\rightarrow$ $M[A]$ = 7, $M[B]$ = -9, $M[C]$ = \textbf{0}, $M[D]$ = 3, Jump to $L_1$.\\[7pt]
+\indent $L_1$: subleq\quad $D,\ D,\ L_2$\\
+$\rightarrow$ $M[A]$ = 7, $M[B]$ = -9, $M[C]$ = 0, $M[D]$ = \textbf{0}, Jump to $L_2$.\\[7pt]
+\indent $L_2$: subleq\quad $A,\ B,\ L_6$\\
+$\rightarrow$ $M[A]$ = \textbf{16}, $M[B]$ = -9, $M[C]$ = 0, $M[D]$ = 0, Jump to $next$.\\[7pt]
+\indent $L_3$: subleq\quad $D,\ B,\ L_4$\\
+$\rightarrow$ $M[A]$ = 16, $M[B]$ = -9, $M[C]$ = 0, $M[D]$ = \textbf{9}, Jump to $next$.\\[7pt]
+\indent $L_4$: subleq\quad $C,\ D,\ L_5$\\
+$\rightarrow$ $M[A]$ = 16, $M[B]$ = -9, $M[C]$ = \textbf{-9}, $M[D]$ = 9, Jump to $L_5$.\\[7pt]
+\indent $L_5$: subleq\quad $D,\ D,\ L_9$\\
+$\rightarrow$ $M[A]$ = 16, $M[B]$ = -9, $M[C]$ = -9, $M[D]$ = \textbf{0}, Jump to $L_9$.\\[7pt]
+\indent $L_9$: \\
+$\rightarrow$ $M[A]$ = 16, $M[B]$ = -9, $M[C]$ = -9, $M[D]$ = 0, 	$End$.\\
+
+\noindent In general, this snippet of code does the following operation:\\If $M[A] > M[B]$, $M[C] \leftarrow M[B]$. If $M[A] \le M[B]$, $M[C] \leftarrow M[A] - M[B]$. $D$ is a temporary memory location.
+
+%%%	sub d %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(d)}
+\begin{multicols}{2}
+		$L_0$: subleq\quad $M_2,\ M_2,\ L_1$\\[5pt]
+\indent $L_1$: subleq\quad $M_2,\ M_0,\ L_2$\\[5pt]
+\indent $L_2$: subleq\quad $M_0,\ \,C_1,\ \,L_4$\\[5pt]
+\indent $L_3$: subleq\quad $M_1,\ M_1,\ L_1$\\[5pt]
+\indent $L_4$: subleq\quad $M_1,\ M_2,\ L_5$\\[5pt]
+\indent $L_5$: Exit. \\
+\columnbreak
+
+\noindent // $M_2 \leftarrow 0$\\[5pt]
+// $M_2 \leftarrow M_2 - M_0$\\[5pt]
+// $M_0 \leftarrow M_0 - 1$\\[5pt]
+// if $M_0 > 0$, loop; else, end loop\\[5pt]
+// $M_1 \leftarrow - M_2$\\[5pt]
+// Exit. The total no. of steps is $N$*3+1.\\
+\end{multicols}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	Solution 2
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Solution 2}
+
+\noindent Note: The instruction format in HW pdf is different from which in one of the reference pdf. In this solution, the format we used was referred to the "BASIC INSTRUCTION FORMATS" table in the references as following:
+\begin{center}
+  \begin{tabularx}{0.7\textwidth}{>{\hsize=\hsize}X *{6}{| *{1}{>{\hsize=\hsize\centering\arraybackslash}X} } |}
+      \cline{2-7}
+      R: & op & rs & rt & rd & sha & func\\
+      \cline{2-7}
+      I: & op & rs & rt & \multicolumn{3}{c|}{imm}\\
+      \cline{2-7}
+      J: & op & rs & \multicolumn{4}{c|}{addr}\\
+      \cline{2-7}
+      \end{tabularx}
+\end{center}
+For example, instruction ADD and XORI:\\[5pt]
+\indent $rd = rs + rt \hspace{16pt} \rightarrow \quad \textbf{add}\quad rs, rt, rd$\\
+\indent $rt = rs\ xor\ 1 \quad \rightarrow \quad \textbf{xori}\quad rs, rt, 1$\\
+
+%%%	sub a %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(a)}
+\begin{multicols}{2}
+\begin{tabular}{l l}
+	$\textbf{sub}$ & $rx,\ rx,\ rx$\\
+	$\textbf{sub}$ & $rx,\ rt,\ \,rx$\\
+	$\textbf{sub}$ & $rs,\ rx,\ rd$\\
+\end{tabular}
+\columnbreak
+
+\noindent 
+// $rx \leftarrow 0$\\
+// $rx \leftarrow -rt$\\
+// $rd \leftarrow rs - (-rt)$\\
+\end{multicols}
+
+%%%	sub b %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(b)}
+\begin{multicols}{2}
+\begin{tabular}{l l}
+	$\textbf{xori}$ & $rt,\ rt,\ \,1$\\
+	$\textbf{xori}$ & $rs,\ rs,\ 1$\\
+	$\textbf{nor}$ & $rt,\ rs,\ rd$\\
+	$\textbf{xori}$ & $rt,\ rt,\ \,1$\\
+	$\textbf{xori}$ & $rs,\ rs,\ 1$\\
+\end{tabular}
+\columnbreak
+
+\noindent 
+// ${\sim}rt$\\
+// ${\sim}rs$\\
+// $rd \leftarrow {\sim}({\sim}rt|{\sim}rs) = rt\ \&\ rs$\\
+// $rt$\\
+// $rs$\\
+\end{multicols}
+
+%%%	sub c %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(c)}
+// MIPS uses Big-endian
+\begin{multicols}{2}
+\begin{tabular}{l l}
+	$\textbf{lhu}$ & $rs,\ rt,\ \,imm$\\
+	$\textbf{lhu}$ & $rs,\ rx,\ imm+2$\\
+	$\textbf{sll}$ & $rt,\ rt,\ \;16$\\
+	$\textbf{or}$ & $rt,\ rx,\ \:rt$\\
+\end{tabular}
+\columnbreak
+
+\noindent
+// load higher 2 bytes to $rt$\\
+// load lower 2 bytes to $rx$\\
+// $rt$ shift left by 16 bits (2 bytes)\\
+// $rt \leftarrow rt|rx$\\
+\end{multicols}
+
+%%%	sub d %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(d)}
+\noindent // In Jump instruction, $addr$ is a 26 bits immediate. Let's assume that immediate $haddr$ = 16b'($addr$ $>>$ 16), $laddr$ = 16b'($addr$ \& $0xFF$).
+\begin{multicols}{2}
+\begin{tabular}{l l}
+	$\textbf{ori}$ & $\$0,\ rx,\ haddr$\\
+	$\textbf{sll}$ & $rx,\ rx,\ 16$\\
+	$\textbf{ori}$ & $rx,\ rx,\ laddr$\\
+	$\textbf{sll}$ & $rx,\ rx,\ 2$\\
+	$\textbf{jr}$ & $rx$\\
+\end{tabular}
+\columnbreak
+
+\noindent 
+// $rx \leftarrow haddr$\\
+// $rx \leftarrow \{haddr,\ 16b'0\}$\\
+// $rx \leftarrow \{haddr,\ laddr\}=addr$\\
+// $rx \leftarrow \{addr,\ 2b'0\}=addr<<2$\\
+\end{multicols}
+
+\noindent // The instructions above only make $PC = (addr<<2)$. However, \textbf{j} $addr \rightarrow PC = PC\&0xF0000000|(addr<<2)$. But there's no instructions to get the value of PC. So the higher 4 bits of PC are lost. \\
+// Instruction j is simply equivalent to jal, if it's ok to ignore \$ra.\\
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	Solution 3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Solution 3}
+
+%%%	sub a %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(a)}
+3-address:\quad	\textbf{ADD} $Rd,\ Rs,\ Rn$\\
+\indent 2-address:\quad	\textbf{AND} $Rd,\ Rs$\\
+
+%%%	sub b %%%%%%%%%%%%%%%%%%%%%
+\subsection*{(b)}
+\textbf{Supported:}
+\begin{itemize}
+\item Displaced/Based\\[5pt]
+	$LDR\quad Rd,\ [Rb,\ \#Imm]$\qquad // $\#Imm$ is a 5 bits offset, $Rd \leftarrow Mem[Rb + Imm]$\\
+    $STR\quad\, Rd,\ [Rb,\ \#Imm]$\qquad // $\#Imm$ is a 5 bits offset, $Mem[Rb + Imm] \leftarrow Rd$
+\item Indexed\\[5pt]
+	$LDR\quad Rd,\ [Rb,\ Ro]$\qquad \qquad // $Rd \leftarrow Mem[Rb + Ro]$\\
+    $STR\quad\, Rd,\ [Rb,\ Ro]$\qquad \qquad // $Mem[Rb + Ro] \leftarrow Rd$\\
+\end{itemize}
+
+
+\textbf{Unsupported:}
+\begin{itemize}
+\item Absolute\\[5pt]
+But We can emulate an absolute addressing instruction by using the displaced/based addressing instruction with $Rb$ pre-assigned to 0. But the $Imm$ is only 5 bits long, which means we can only absolutely access to the memory locating from 0 to $2^5$.\\[5pt]
+	LDR\quad $Rd, [\$0, \#Imm]$\qquad \qquad // $Rd \leftarrow Mem[Imm]$\\
+	STR\quad $Rd, [\$0, \#Imm]$\qquad \qquad // $Mem[Imm] \leftarrow Rd$
+\item Register Indirect\\[5pt]
+The same as above, the register indirect instruction can be emulated.\\[5pt]
+	$LDR\quad Rd,\ [Rb,\ \#0]$\qquad \qquad // $Rd \leftarrow Mem[Rb]$\\
+    $STR\quad\, Rd,\ [Rb,\ \#0]$\qquad \qquad // $Mem[Rb] \leftarrow Rd$\\
+\item Auto-increment\\[5pt]
+We are not sure whether the sum of Rb and Imm in displaced/based addressing instruction is written back to Rb or not. If the sum is written back to Rb, the auto-increment addressing mode should be considered as supported. But it's a pre-indexed addressing mode, which is different from the post-index addressing mode discussed in the class.\\[5pt]
+	$LDR\quad Rd,\ [Rb,\ \#1]$\qquad \qquad // $Rd \leftarrow Mem[Rb]$\\
+    $STR\quad\, Rd,\ [Rb,\ \#1]$\qquad \qquad // $Mem[Rb] \leftarrow Rd$\\
+\item Memory Indirect\\[5pt]
+\end{itemize}
+
+\end{document}
