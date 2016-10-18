@@ -1,0 +1,19 @@
+Some commands found on internet for testing in gauss.
+Login: 
+% ssh by677@gauss.poly.edu
+(password is N16658308)
+
+Make a dir and enter:
+by677@gauss % mkdir CS6133Lab
+by677@gauss % cd CS6133Lab/
+
+Upload files (enter in a local terminal)
+% scp *.cpp by677@gauss.poly.edu:~/CS6133Lab
+% scp *.txt by677@gauss.poly.edu:~/CS6133Lab
+% scp Makefile by677@gauss.poly.edu:~/CS6133Lab
+
+Test:
+by677@gauss % make
+by677@gauss % ./MIPS
+by677@gauss % less RFresult.txt
+by677@gauss % less dmemresult.txt
