@@ -3,6 +3,7 @@
 #include <vector>
 #include <bitset>
 #include <fstream>
+#include <stdint.h>
 using namespace std;
 #define ADDU 1
 #define SUBU 3
@@ -177,6 +178,7 @@ public:
         else cout<<"Unable to open file";
         dmem.close();
 
+        readdata = bitset<32> (0);
     }
     bitset<32> MemoryAccess (bitset<32> Address, bitset<32> WriteData, bitset<1> readmem, bitset<1> writemem)
     {
@@ -187,7 +189,7 @@ public:
                 WriteData <<= 8;
             }
         }
-        else {
+        else if (readmem.all()) {
             readdata = bitset<32> (0);
 
             for (uint8_t i = 0; i < 4; ++i) {
@@ -262,9 +264,9 @@ public:
         isStore = _opcode.to_ulong()==STORE? bitset<1>(1): bitset<1>(0);
         isI_type = (_opcode.to_ulong()!=JTYPE && _opcode.to_ulong()!=RTYPE && _opcode.to_ulong()!=63)? bitset<1>(1): bitset<1>(0);
         isWrite = (isStore.none() && _opcode.to_ulong()!=JTYPE && _opcode.to_ulong()!=BRANCH)? bitset<1>(1): bitset<1>(0);
-        isNextPC = bitset<2>("11");                                                     // if nextpc->pc,       isNextPC = 2b'11
-        isNextPC &= (_opcode.to_ulong()==JTYPE)? bitset<2>("01"): bitset<2>("11");      // if jumpaddr->pc,     isNextPC = 2b'01
-        isNextPC &= (_opcode.to_ulong()==BRANCH)? bitset<2>("10"): bitset<2>("11");     // if branchaddr->pc,   isNextPC = 2b'10
+        isNextPC = bitset<2>(string("11"));                                                     // if nextpc->pc,       isNextPC = 2b'11
+        isNextPC &= (_opcode.to_ulong()==JTYPE)? bitset<2>(string("01")): bitset<2>(string("11"));      // if jumpaddr->pc,     isNextPC = 2b'01
+        isNextPC &= (_opcode.to_ulong()==BRANCH)? bitset<2>(string("10")): bitset<2>(string("11"));     // if branchaddr->pc,   isNextPC = 2b'10
         if (_opcode.to_ulong()==RTYPE) {
             ALUop = bitset<3> (getBits(_fun.to_ulong(), 2, 0));
         }
