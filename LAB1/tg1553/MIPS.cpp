@@ -17,6 +17,12 @@ using namespace std;
 #define BRANCH 4
 #define MemSize 65536 // memory size, in reality, the memory size should be 2^32, but for this lab, for the space resaon, we keep it as this large number, but the memory is still 32-bit addressable.
 
+#define INS_FILENAME "myCode/myCodeBin.txt"
+#define DAT_FILENAME "myCode/myDataBin.txt"
+#define RFRESULT_FILENAME "myCode/RF_result.txt"
+#define DMRESULT_FILENAME "myCode/Dmem_result.txt"
+
+
 uint32_t getBits(uint32_t, uint8_t, uint8_t);
 bitset<32> SignExtImm(bitset<16>);
 bitset<32> ZeroExtImm(bitset<16>);
@@ -31,7 +37,8 @@ public:
     {
         Registers.resize(32);
         Registers[0] = bitset<32> (0);
-        remove( "RFresult.txt" );
+        remove("RFresult.txt");
+        remove("newRFresult.txt");
     }
 
     void ReadWrite(bitset<5> RdReg1, bitset<5> RdReg2, bitset<5> WrtReg, bitset<32> WrtData, bitset<1> WrtEnable)
@@ -49,13 +56,14 @@ public:
     void OutputRF()
     {
         ofstream rfout;
-        rfout.open("RFresult.txt",std::ios_base::app);
+        rfout.open(RFRESULT_FILENAME,std::ios_base::app);
         if (rfout.is_open())
         {
             rfout<<"A state of RF:"<<endl;
             for (int j = 0; j<32; j++)
             {
-                rfout << Registers[j]<<endl;
+                // TODO
+                rfout << Registers[j]<<"   :"<<Registers[j].to_ulong()<<endl;
             }
 
         }
@@ -112,11 +120,12 @@ public:
     bitset<26> addr;      // 25:0
 
     INSMem()
-    {       IMem.resize(MemSize);
+    {
+        IMem.resize(MemSize);
         ifstream imem;
         string line;
         int i=0;
-        imem.open("imem.txt");
+        imem.open(INS_FILENAME);
         if (imem.is_open())
         {
             while (getline(imem,line))
@@ -166,7 +175,7 @@ public:
         ifstream dmem;
         string line;
         int i=0;
-        dmem.open("dmem.txt");
+        dmem.open(DAT_FILENAME);
         if (dmem.is_open())
         {
             while (getline(dmem,line))
@@ -202,15 +211,30 @@ public:
 
     void OutputDataMem()
     {
+        remove("dmemresult.txt");
         ofstream dmemout;
-        remove( "dmemresult.txt" );
-        dmemout.open("dmemresult.txt");
+        dmemout.open(DMRESULT_FILENAME);
         if (dmemout.is_open())
         {
             for (int j = 0; j< 1000; j++)
             {
                 dmemout << DMem[j]<<endl;
+                // TODO
+                if (j%4 == 3) {
+                    bitset<32> tmp;
+                    tmp = bitset<32> (DMem[j-3].to_ulong());
+                    tmp <<= 8;
+                    tmp |= bitset<32> (DMem[j-2].to_ulong());
+                    tmp <<= 8;
+                    tmp |= bitset<32> (DMem[j-1].to_ulong());
+                    tmp <<= 8;
+                    tmp |= bitset<32> (DMem[j].to_ulong());
+                    dmemout << "          :"
+                            << tmp.to_ulong()
+                            << endl;
+                }
             }
+
 
         }
         else cout<<"Unable to open file";
@@ -264,9 +288,15 @@ public:
         isStore = _opcode.to_ulong()==STORE? bitset<1>(1): bitset<1>(0);
         isI_type = (_opcode.to_ulong()!=JTYPE && _opcode.to_ulong()!=RTYPE && _opcode.to_ulong()!=63)? bitset<1>(1): bitset<1>(0);
         isWrite = (isStore.none() && _opcode.to_ulong()!=JTYPE && _opcode.to_ulong()!=BRANCH)? bitset<1>(1): bitset<1>(0);
-        isNextPC = bitset<2>(string("11"));                                                     // if nextpc->pc,       isNextPC = 2b'11
-        isNextPC &= (_opcode.to_ulong()==JTYPE)? bitset<2>(string("01")): bitset<2>(string("11"));      // if jumpaddr->pc,     isNextPC = 2b'01
-        isNextPC &= (_opcode.to_ulong()==BRANCH)? bitset<2>(string("10")): bitset<2>(string("11"));     // if branchaddr->pc,   isNextPC = 2b'10
+        if (_opcode.to_ulong()==JTYPE) {
+            isNextPC = bitset<2> (1);
+        }
+        else if (_opcode.to_ulong()==BRANCH) {
+            isNextPC = bitset<2> (2);
+        }
+        else {
+            isNextPC = bitset<2> (3);
+        }
         if (_opcode.to_ulong()==RTYPE) {
             ALUop = bitset<3> (getBits(_fun.to_ulong(), 2, 0));
         }
@@ -352,16 +382,18 @@ bitset<32> ZeroExtImm(bitset<16> Imm) {
     return bit32_ZeroExtImm;
 }
 bitset<32> BranchAddr(bitset<16> Imm) {
-    bitset<32> bit32_BranchAddr((Imm<<2).to_ulong());
+    bitset<32> bit32_BranchAddr(Imm.to_ulong());
 
+    bit32_BranchAddr <<= 2;
     for (int i = 18; i < 32; ++i) {
         bit32_BranchAddr.set(i, Imm.test(15));
     }
     return bit32_BranchAddr;
 }
 bitset<32> JumpAddr(bitset<26> Addr) {
-    bitset<32> bit32_JumpAddr((Addr<<2).to_ulong());
+    bitset<32> bit32_JumpAddr(Addr.to_ulong());
 
+    bit32_JumpAddr <<= 2;
     return bit32_JumpAddr;
 }
 
