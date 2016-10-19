@@ -1,1 +1,1 @@
-Use 'make' to compile. In the current folder, execute './MIPS' and you will get the result of the given MIPS program. Then cd to 'myCode' folder, there is a bubble sort MIPS program written by ourself. To see the result, excute './MIPS' in myCode folder.
+Use 'make' to compile. In the current folder, execute './MIPS' and you will get the result of the given MIPS program. Then cd to 'myCode' folder, there is a bubble sort MIPS program written by ourself. To see the result, execute './MIPS' in myCode folder.
