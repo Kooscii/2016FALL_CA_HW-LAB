@@ -18,10 +18,10 @@ using namespace std;
 #define MemSize 65536 // memory size, in reality, the memory size should be 2^32, but for this lab, for the space resaon, we keep it as this large number, but the memory is still 32-bit addressable.
 
 #ifdef MYCODE
-#define INS_FILENAME "./myCodeBin.txt"
-#define DAT_FILENAME "./myDataBin.txt"
-#define RFRESULT_FILENAME "./RF_result.txt"
-#define DMRESULT_FILENAME "./Dmem_result.txt"
+#define INS_FILENAME "myCodeBin.txt"
+#define DAT_FILENAME "myDataBin.txt"
+#define RFRESULT_FILENAME "RF_result.txt"
+#define DMRESULT_FILENAME "Dmem_result.txt"
 #else
 #define INS_FILENAME "imem.txt"
 #define DAT_FILENAME "dmem.txt"

@@ -1,0 +1,17 @@
+lw $a0, 4($zero)
+lw $s0, 0($zero)
+addiu $s0, $s0, -1
+beq $s0, $zero, 13
+addiu $s1, $zero, -1
+addiu $s2, $zero, -4
+addiu $s1, $s1, 1
+addiu $s2, $s2, 4
+beq $s1, $s0, -7
+lw $t0, 8($s2)
+lw $t1, 12($s2)
+subu $t2, $t1, $t0
+and $t2, $t2, $a0
+beq $t2, $zero, -8
+sw $t1, 8($s2)
+sw $t0, 12($s2)
+j 6
