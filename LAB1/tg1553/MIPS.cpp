@@ -17,10 +17,17 @@ using namespace std;
 #define BRANCH 4
 #define MemSize 65536 // memory size, in reality, the memory size should be 2^32, but for this lab, for the space resaon, we keep it as this large number, but the memory is still 32-bit addressable.
 
-#define INS_FILENAME "myCode/myCodeBin.txt"
-#define DAT_FILENAME "myCode/myDataBin.txt"
-#define RFRESULT_FILENAME "myCode/RF_result.txt"
-#define DMRESULT_FILENAME "myCode/Dmem_result.txt"
+#ifdef MYCODE
+#define INS_FILENAME "./myCodeBin.txt"
+#define DAT_FILENAME "./myDataBin.txt"
+#define RFRESULT_FILENAME "./RF_result.txt"
+#define DMRESULT_FILENAME "./Dmem_result.txt"
+#else
+#define INS_FILENAME "imem.txt"
+#define DAT_FILENAME "dmem.txt"
+#define RFRESULT_FILENAME "RFresult.txt"
+#define DMRESULT_FILENAME "dmemresult.txt"
+#endif
 
 
 uint32_t getBits(uint32_t, uint8_t, uint8_t);
@@ -37,8 +44,7 @@ public:
     {
         Registers.resize(32);
         Registers[0] = bitset<32> (0);
-        remove("RFresult.txt");
-        remove("newRFresult.txt");
+        remove(RFRESULT_FILENAME);
     }
 
     void ReadWrite(bitset<5> RdReg1, bitset<5> RdReg2, bitset<5> WrtReg, bitset<32> WrtData, bitset<1> WrtEnable)
@@ -62,8 +68,11 @@ public:
             rfout<<"A state of RF:"<<endl;
             for (int j = 0; j<32; j++)
             {
-                // TODO
-                rfout << Registers[j]<<"   :"<<Registers[j].to_ulong()<<endl;
+#ifdef MYCODE
+                rfout << Registers[j] << "    :" << Registers[j].to_ulong() <<endl;
+#else
+                rfout << Registers[j] <<endl;
+#endif
             }
 
         }
@@ -211,15 +220,15 @@ public:
 
     void OutputDataMem()
     {
-        remove("dmemresult.txt");
+        remove(DMRESULT_FILENAME);
         ofstream dmemout;
         dmemout.open(DMRESULT_FILENAME);
         if (dmemout.is_open())
         {
             for (int j = 0; j< 1000; j++)
             {
-                dmemout << DMem[j]<<endl;
-                // TODO
+                dmemout << DMem[j] <<endl;
+#ifdef MYCODE
                 if (j%4 == 3) {
                     bitset<32> tmp;
                     tmp = bitset<32> (DMem[j-3].to_ulong());
@@ -232,7 +241,9 @@ public:
                     dmemout << "          :"
                             << tmp.to_ulong()
                             << endl;
+
                 }
+#endif
             }
 
 
