@@ -1,2 +1,5 @@
 Use 'make' to compile. In the current folder, execute './MIPS' and you will get the result of the given MIPS program. Then cd to 'myCode' folder, there is a bubble sort MIPS program written by ourself. To see the result, execute './MIPS' in myCode folder.
 If you want to change the random number in data memory 'myDataBin.txt', you can run 'python convert.py' in 'myCode' folder.
+
+Bo by677
+Tianyu tg1553
