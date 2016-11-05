@@ -1,0 +1,12 @@
+IF,ID/RF,EX,MEM,WB,,,,,,,,,,,
+"LOOP: addiu $1, $1, 4",Read $1,R[$1]+4,nop,Write $1,,,,,,,,,,,
+,IF,ID/RF,ID/RF,ID/RF,EX,MEM,WB,,,,,,,,
+,"lw $1, $4, baseA",Read $1,Read $1,Read $1,Addr=R[$1]+SgnBaseA,Load from Addr,Write $4,,,,,,,,
+,,IF,IF,IF,ID/RF,ID/RF,ID/RF,EX,MEM,,,,,,
+,,"addi $2, $4, $2","addi $2, $4, $2","addi $2, $4, $2","Read $4, $2","Read $4, $2","Read $4, $2",R[$4]+R[$2],nop,Write $2,,,,,
+,,,,,IF,IF,IF,ID/RF,EX,MEM,WB,,,,
+,,,,,"lw $1, $5, baseB","lw $1, $5, baseB","lw $1, $5, baseB",Read $1,Addr=R[$1]+SgnBaseB,Load from Addr,Write $5,,,,
+,,,,,,,,IF,ID/RF,ID/RF,ID/RF,EX,MEM,WB,
+,,,,,,,,"sw $1, $5, baseA","Read $1, $5","Read $1, $5","Read $1, $5",Addr=R[$1]+SgnBaseA,Store R[$5] to Addr,nop,
+,,,,,,,,,IF,IF,IF,ID/RF,EX,MEM,WB
+,,,,,,,,,"addi $3, $5, $3","addi $3, $5, $3","addi $3, $5, $3","Read $5, $3",R[$5]+R[$3],nop,Write $3
