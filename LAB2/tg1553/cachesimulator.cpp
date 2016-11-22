@@ -200,7 +200,7 @@ public:
     int allocate(uint32_t _indx, uint32_t _tag, vector<uint8_t> _data) {
         uint32_t evi_indx;
         evi_indx = Set[_indx].getEvi_indx();
-        if (Set[_indx].Block[evi_indx].isDirty()) {
+        if (Set[_indx].Block[evi_indx].isDirty()) {         // while allocating, isVaild or not doesn't matter at all
             ret_block = Set[_indx].Block[evi_indx].getContent();
             ret_tag = Set[_indx].Block[evi_indx].getTag();
 
@@ -245,17 +245,21 @@ public:
         return state_wrt;
     }
 
-    void resetState() {
-        state_wrt = NA;
-        state_rd = NA;
-        ret_block.assign((unsigned long) Set->Block->getSize(), 0);
-        ret_tag = 0;
+    void resetState(char wr) {
+        if (wr == 'w') {
+            state_wrt = NA;
+        }
+        else if (wr == 'r') {
+            state_rd = NA;
+        }
+//        ret_block.assign((unsigned long) Set->Block->getSize(), 0);
+//        ret_tag = 0;
     };
 
     int getState(char wr) {
         int tmp_state;
         tmp_state = wr == 'w' ? state_wrt : state_rd;
-        resetState();
+        resetState(wr);
         return tmp_state;
     };
 
@@ -350,6 +354,7 @@ public:
             return mem;                     // return block of data, length : previous level cache blocksize
 
         } else {                                  // access cache level
+            L[n].resetState('r');
             resolveAddr(_addr, n);
 
             // read access
@@ -382,6 +387,7 @@ public:
             return;                     // write back into memory, return
 
         } else {
+            L[n].resetState('w');
             resolveAddr(_addr, n);
 
             // write access
