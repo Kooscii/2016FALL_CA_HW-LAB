@@ -184,7 +184,6 @@ public:
     int read(uint32_t _indx, uint32_t _tag) {
         uint32_t i;
 
-        resetState();
         for (i = 0; i < Set[_indx].getSize(); i++) {
             if (Set[_indx].Block[i].getTag() == _tag && Set[_indx].Block[i].isVaild()) {      // read hit
                 state_rd = RH;
@@ -220,6 +219,31 @@ public:
             return NA;
         }
     };
+
+    int write(uint32_t _indx, uint32_t _tag, uint32_t _offset, vector<uint8_t> _data) {
+        uint32_t way, i;
+        int len_data;
+
+        state_wrt = WM;
+        for (way = 0; way < Set[_indx].getSize(); way++) {
+            if (Set[_indx].Block[way].getTag() == _tag && Set[_indx].Block[way].isVaild()) {      // write hit
+                state_wrt = WH;
+                break;
+            }
+        }
+        if (state_wrt == WH) {
+            Set[_indx].Block[way].setDirty();
+            // size of data may shorter than current level block size
+            len_data = (int) _data.size();
+            _offset /= len_data;
+            _offset *= len_data;        // find the starting offset of the data block
+            for (i = 0; i<len_data;i++){
+                Set[_indx].Block[way].content[_offset+i] = _data[i];
+            }
+        }
+        // otherwise, read miss
+        return state_wrt;
+    }
 
     void resetState() {
         state_wrt = NA;
@@ -262,6 +286,8 @@ private:
     int *blocksize;
     int *setsize;
     int maxLevel;
+    uint32_t * index, *tag, *offset;
+
 
 public:
     CacheLevel *L;
@@ -281,6 +307,34 @@ public:
         L[0].setLevelsize(1, 1, 1);
         L[1].setLevelsize(_cfg.L1size * 1024, _cfg.L1blocksize, _cfg.L1setsize);
         L[2].setLevelsize(_cfg.L2size * 1024, _cfg.L2blocksize, _cfg.L2setsize);
+
+        index = new uint32_t[_nLevel+1];
+        tag = new uint32_t[_nLevel+1];
+        offset = new uint32_t[_nLevel+1];
+
+        offset[0] = 0;
+    }
+
+    void resolveAddr(bitset<32> _addr, int n) {
+        int i;
+
+        bitset<32> mask_offset(0); // bits mask of previous level cache block offset
+        for (i = 0; i < L[n].getBlockbits(); i++)
+            mask_offset.set((size_t) i);
+        offset[n] = (uint32_t) (_addr & mask_offset).to_ulong();      // get previous level offset
+
+        // get index
+        bitset<32> mask_index(0); // bits of Ln cache index
+        for (; i < L[n].getBlockbits() + L[n].getIndexbits(); i++)
+            mask_index.set((size_t) i);
+        index[n] = (uint32_t) ((_addr & mask_index)>>L[n].getBlockbits()).to_ulong();      // get current level offset
+
+        // get index
+        bitset<32> mask_tag(0); // bits of Ln cache index
+        for (; i < L[n].getBlockbits() + L[n].getIndexbits() + L[n].getTagbits(); i++)
+            mask_tag.set((size_t) i);
+        tag[n] = (uint32_t) ((_addr & mask_tag)>>(L[n].getBlockbits() + L[n].getIndexbits())).to_ulong();      // get current level offset
+
     }
 
     // read Ln cache, return block of data, length of block equals to previous level cache blocksize
@@ -289,9 +343,6 @@ public:
         vector<uint8_t> ret_block;
         vector<uint8_t> recv_block;
         bitset<32> ev_addr(0);
-        uint32_t index, tag, offset;
-        uint32_t offset_p;
-        int i;
 
         if (n > maxLevel) {              // if read miss in all cache level
             vector<uint8_t> mem;
@@ -299,55 +350,48 @@ public:
             return mem;                     // return block of data, length : previous level cache blocksize
 
         } else {                                  // access cache level
-            L[n].resetState();
-
-            // get offset
-            bitset<32> mask_offset_p(0); // bits mask of current level cache block offset
-            for (i = 0; i < L[n - 1].getBlockbits(); i++)
-                mask_offset_p.set((size_t) i);
-            offset_p = (uint32_t) (_addr & mask_offset_p).to_ulong();      // get current level offset
-
-            bitset<32> mask_offset(0); // bits mask of previous level cache block offset
-            for (i = 0; i < L[n].getBlockbits(); i++)
-                mask_offset.set((size_t) i);
-            offset = (uint32_t) (_addr & mask_offset).to_ulong();      // get previous level offset
-
-            // get index
-            bitset<32> mask_index(0); // bits of Ln cache index
-            for (; i < L[n].getBlockbits() + L[n].getIndexbits(); i++)
-                mask_index.set((size_t) i);
-            index = (uint32_t) ((_addr & mask_index)>>L[n].getBlockbits()).to_ulong();      // get current level offset
-
-            // get index
-            bitset<32> mask_tag(0); // bits of Ln cache index
-            for (; i < L[n].getBlockbits() + L[n].getIndexbits() + L[n].getTagbits(); i++)
-                mask_tag.set((size_t) i);
-            tag = (uint32_t) ((_addr & mask_tag)>>(L[n].getBlockbits() + L[n].getIndexbits())).to_ulong();      // get current level offset
+            resolveAddr(_addr, n);
 
             // read access
-            ret = L[n].read(index, tag);
+            ret = L[n].read(index[n], tag[n]);
             if (ret == RH) {     // if read hit in current level, return block
                 recv_block = L[n].getBlock();
 
             } else {                              // if read miss, access next level and allocate when returned
                 recv_block = read(_addr, n + 1);   //
-                ret = L[n].allocate(index, tag, recv_block);          //
+                ret = L[n].allocate(index[n], tag[n], recv_block);          //
                 if (ret == EV) {        // if data evicted, write back to next level
-                    ev_addr = bitset<32>(index << L[n].getBlockbits());
+                    ev_addr = offset[n];
+                    ev_addr |= bitset<32>(index[n] << L[n].getBlockbits());
                     ev_addr |= bitset<32>(L[n].getEVTag() << L[n].getBlockbits() + L[n].getIndexbits());
                     write(ev_addr, L[n].getBlock(), n + 1);
                 }
                 // if no data evicted, nothing to do
             }
+            vector<uint8_t>::iterator it_first = recv_block.begin() + offset[n] - offset[n-1];
+            vector<uint8_t>::iterator it_last = it_first + pow(2, L[n - 1].getBlockbits());
+            ret_block.assign(it_first, it_last);
+            return ret_block;
         }
-        vector<uint8_t>::iterator it_first = recv_block.begin() + offset - offset_p;
-        vector<uint8_t>::iterator it_last = it_first + pow(2, L[n - 1].getBlockbits());
-        ret_block.assign(it_first, it_last);
-        return ret_block;
     };
 
-    void write(bitset<32> _addr, vector<uint8_t> _data, int level = 1) {
-        
+    void write(bitset<32> _addr, vector<uint8_t> _data, int n = 1) {
+        int ret;                    // returned block of data
+
+        if (n > maxLevel) {              // if write miss in all cache level
+            return;                     // write back into memory, return
+
+        } else {
+            resolveAddr(_addr, n);
+
+            // write access
+            ret = L[n].write(index[n], tag[n], offset[n], _data);
+            if (ret == WM) {            // if write miss, nothing to do
+                write(_addr, _data, n+1);
+            }
+            // if write hit, nothing to do
+            return;
+        }
     };
 };
 
