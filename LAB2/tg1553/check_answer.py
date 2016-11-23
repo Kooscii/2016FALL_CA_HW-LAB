@@ -11,9 +11,14 @@ f = open('trace.txt', 'r')
 g = open('trace.txt.out', 'r')
 o = open('trace_out.txt', 'w')
 o2 = open('check.csv', 'w')
-index = 210
-L1set = [0]
-L2set = [0, 0, 0, 0]
+
+L1blocksize=8
+L1setsize=2
+L1size=32
+L2blocksize=16
+L2setsize=8
+L2size=64
+
 op = []
 L1_tag = []
 L1_index = []
@@ -47,12 +52,16 @@ o.close()
 n = len(op)
 c1 = dict()
 c2 = dict()
+v1 = dict()
+v2 = dict()
 evi1 = dict()
 evi2 = dict()
 
 o2.write(',,,%s,,,,,%s,,,,,\n' % ('L1', 'L2'))
 o2.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,\n' % (
-    'no', 'check', 'R/W', 'index', 'tag', 'way0', 'expect', 'answer', 'index', 'tag', 'way0', 'way1', 'way2', 'way3',
+    'no', 'check', 'R/W', 'index', 'tag', 
+
+    'way0', 'expect', 'answer', 'index', 'tag', 'way0', 'way1', 'way2', 'way3',
     'expect', 'answer'))
 
 for i in range(0, n):
@@ -68,6 +77,7 @@ for i in range(0, n):
         c1[L1_index[i]]
     except:
         c1[L1_index[i]] = [0]
+        v1[L1_index[i]] = [0]
         # set1 = [0]
         evi1[L1_index[i]] = 0
 
@@ -75,11 +85,12 @@ for i in range(0, n):
         c2[L2_index[i]]
     except:
         c2[L2_index[i]] = [0, 0, 0, 0]
+        v2[L2_index[i]] = [0, 0, 0, 0]
         # set2 = [0, 0, 0, 0]
         evi2[L2_index[i]] = 0
 
-    for tag in c1[L1_index[i]]:
-        if tag == L1_tag[i]:
+    for way, tag in enumerate(c1[L1_index[i]]):
+        if tag == L1_tag[i] and v1[L1_index[i]][way] == 1:
             flag1 = 1
             break
 
@@ -95,12 +106,13 @@ for i in range(0, n):
         elif op[i] == 'R':
             expc1 = 'RM'
             c1[L1_index[i]][evi1[L1_index[i]]] = L1_tag[i]
+            v1[L1_index[i]][evi1[L1_index[i]]] = 1
             evi1[L1_index[i]] = (evi1[L1_index[i]] + 1) % 1
 
     # L2
     if flag1 == 0:
-        for tag in c2[L2_index[i]]:
-            if tag == L2_tag[i]:
+        for way, tag in enumerate(c2[L2_index[i]]):
+            if tag == L2_tag[i] and v2[L2_index[i]][way] == 1:
                 flag2 = 1
                 break
 
@@ -115,6 +127,7 @@ for i in range(0, n):
             elif op[i] == 'R':
                 expc2 = 'RM'
                 c2[L2_index[i]][evi2[L2_index[i]]] = L2_tag[i]
+                v2[L2_index[i]][evi2[L2_index[i]]] = 1
                 evi2[L2_index[i]] = (evi2[L2_index[i]] + 1) % 4
 
     if expc1 == L1[i] and expc2 == L2[i]:

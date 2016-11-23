@@ -132,7 +132,7 @@ public:
 
     uint32_t getEvi_indx() {            // round-robin policy counter
         uint32_t tmp_evi = u32Evi_cntr;
-        u32Evi_cntr += u32Evi_cntr;
+        u32Evi_cntr += 1;
         if (u32Evi_cntr >= size)        // loop among 0 to size-0
             u32Evi_cntr = 0;
         return tmp_evi;
@@ -199,8 +199,20 @@ public:
 
     int allocate(uint32_t _indx, uint32_t _tag, vector<uint8_t> _data) {
         uint32_t evi_indx;
-        evi_indx = Set[_indx].getEvi_indx();
-        if (Set[_indx].Block[evi_indx].isDirty()) {
+        uint32_t way;
+
+        for (way = 0; way < Set[_indx].getSize(); way++) {        // looking for empty way
+            if (!Set[_indx].Block[way].isVaild()) {
+                Set[_indx].Block[way].setContent(_data);
+                Set[_indx].Block[way].setTag(_tag);
+                Set[_indx].Block[way].setVaild();
+                Set[_indx].Block[way].resetDirty();
+                return NA;
+            }
+        }
+
+        evi_indx = Set[_indx].getEvi_indx();        // if no empty ways
+        if (Set[_indx].Block[evi_indx].isDirty()) {         // while allocating, isVaild or not doesn't matter at all
             ret_block = Set[_indx].Block[evi_indx].getContent();
             ret_tag = Set[_indx].Block[evi_indx].getTag();
 
@@ -245,17 +257,22 @@ public:
         return state_wrt;
     }
 
-    void resetState() {
-        state_wrt = NA;
-        state_rd = NA;
-        ret_block.assign((unsigned long) Set->Block->getSize(), 0);
-        ret_tag = 0;
+    void resetState(char wr) {
+        if (wr == 'w') {
+            state_wrt = NA;
+        }
+        else if (wr == 'r') {
+            state_rd = NA;
+        }
+//        ret_block.assign((unsigned long) Set->Block->getSize(), 0);
+//        ret_tag = 0;
     };
 
     int getState(char wr) {
         int tmp_state;
         tmp_state = wr == 'w' ? state_wrt : state_rd;
-        resetState();
+        resetState('r');
+        resetState('w');
         return tmp_state;
     };
 
@@ -287,7 +304,6 @@ private:
     int *setsize;
     int maxLevel;
     uint32_t * index, *tag, *offset;
-
 
 public:
     CacheLevel *L;
@@ -350,6 +366,7 @@ public:
             return mem;                     // return block of data, length : previous level cache blocksize
 
         } else {                                  // access cache level
+            L[n].resetState('r');
             resolveAddr(_addr, n);
 
             // read access
@@ -371,6 +388,7 @@ public:
             vector<uint8_t>::iterator it_first = recv_block.begin() + offset[n] - offset[n-1];
             vector<uint8_t>::iterator it_last = it_first + pow(2, L[n - 1].getBlockbits());
             ret_block.assign(it_first, it_last);
+
             return ret_block;
         }
     };
@@ -382,6 +400,7 @@ public:
             return;                     // write back into memory, return
 
         } else {
+            L[n].resetState('w');
             resolveAddr(_addr, n);
 
             // write access
@@ -421,6 +440,7 @@ int main(int argc, char *argv[]) {
     Cache myCache(cacheconfig, 2);
     vector<uint8_t> dummydata, retdata;
     dummydata.assign(1, 0x12);
+    int debug_cnt=1;
 
     int L1AcceState = 0; // L1 access state variable, can be one of NA, RH, RM, WH, WM;
     int L2AcceState = 0; // L2 access state variable, can be one of NA, RH, RM, WH, WM;
@@ -449,6 +469,9 @@ int main(int argc, char *argv[]) {
             saddr >> std::hex >> addr;
             accessaddr = bitset<32>(addr);
 
+            debug_cnt++;
+            if (debug_cnt == 1586)
+                debug_cnt = debug_cnt;
 
             // access the L1 and L2 Cache according to the trace;
             if (accesstype.compare("R") == 0) {
