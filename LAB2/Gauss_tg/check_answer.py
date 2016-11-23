@@ -1,8 +1,8 @@
 import os
-from math import log2
+from math import log
 
 try:
-    os.remove('trace_out.txt')
+    os.remove('trace_resolved.txt')
     os.remove('check.csv')
 except:
     pass
@@ -10,21 +10,21 @@ except:
 state = ['NA', 'RH', 'RM', 'WH', 'WM']
 f = open('trace.txt', 'r')
 g = open('trace.txt.out', 'r')
-o = open('trace_out.txt', 'w')
+o = open('trace_resolved.txt', 'w')
 o2 = open('check.csv', 'w')
 
-L1blocksize = 16
-L1setsize = 2
-L1size = 32
-L2blocksize = 32
-L2setsize = 8
-L2size = 64
+L1blocksize = 8
+L1setsize = 1
+L1size = 16
+L2blocksize = 16
+L2setsize = 4
+L2size = 32
 
-offsetbits1 = int(log2(L1blocksize))
-indexbits1 = int(log2(L1size * 1024 / L1setsize) - offsetbits1)
+offsetbits1 = int(log(L1blocksize,2))
+indexbits1 = int(log(L1size * 1024 / L1setsize, 2) - offsetbits1)
 tagbits1 = int(32 - indexbits1 - offsetbits1)
-offsetbits2 = int(log2(L2blocksize))
-indexbits2 = int(log2(L2size * 1024 / L2setsize) - offsetbits2)
+offsetbits2 = int(log(L2blocksize, 2))
+indexbits2 = int(log(L2size * 1024 / L2setsize, 2) - offsetbits2)
 tagbits2 = int(32 - indexbits2 - offsetbits2)
 
 op = []
