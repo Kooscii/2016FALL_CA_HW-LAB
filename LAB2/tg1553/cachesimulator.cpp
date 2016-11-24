@@ -1,3 +1,5 @@
+/* Copyright 201 tg1553 */
+
 /*
 Cache Simulator
 Level one L1 and level two L2 cache parameters are read from file (block size, line per set and set per cache).
@@ -18,12 +20,12 @@ s = log2(#sets)   b = log2(block size)  t=32-s-b
 
 using namespace std;
 //access state:
-#define NA 0 // no action
-#define RH 1 // read hit
-#define RM 2 // read miss
-#define WH 3 // Write hit
-#define WM 4 // write miss
-#define EV 5 // block evicted
+#define NA 0    // no action
+#define RH 1    // read hit
+#define RM 2    // read miss
+#define WH 3    // Write hit
+#define WM 4    // write miss
+#define EV 5    // block evicted
 
 struct config {
     int L1blocksize;
@@ -42,7 +44,7 @@ class cache {
 class CacheBlock {
 private:
     uint32_t u32Tag;
-    bool bVaild;
+    bool bValid;
     bool bDirty;
     int size;
     int tag_bits;
@@ -52,9 +54,9 @@ public:
 
     CacheBlock() {
         u32Tag = 0;
-        bVaild = false;
+        bValid = false;
         bDirty = false;
-    };
+    }
 
     void setBlocksize(int blocksize) {
         content.assign(blocksize, 0);
@@ -77,12 +79,12 @@ public:
         u32Tag = _tag;
     }
 
-    void setVaild() {
-        bVaild = true;
+    void setValid() {
+        bValid = true;
     }
 
-    void resetVaild() {
-        bVaild = false;
+    void resetValid() {
+        bValid = false;
     }
 
     void setDirty() {
@@ -95,14 +97,14 @@ public:
 
     uint32_t getTag() {
         return u32Tag;
-    };
+    }
 
     int getSize() {
         return size;
     }
 
-    bool isVaild() {
-        return bVaild;
+    bool isValid() {
+        return bValid;
     }
 
     bool isDirty() {
@@ -161,7 +163,7 @@ public:
     CacheLevel() {
         state_rd = NA;
         state_wrt = NA;
-    };
+    }
 
     void setLevelsize(int _size, int _blocksize, int _setsize) {
         int max_index;
@@ -179,13 +181,13 @@ public:
 
         ret_block.assign((unsigned long) Set->Block->getSize(), 0);
         ret_tag = 0;
-    };
+    }
 
     int read(uint32_t _indx, uint32_t _tag) {
         uint32_t i;
 
         for (i = 0; i < Set[_indx].getSize(); i++) {
-            if (Set[_indx].Block[i].getTag() == _tag && Set[_indx].Block[i].isVaild()) {      // read hit
+            if (Set[_indx].Block[i].getTag() == _tag && Set[_indx].Block[i].isValid()) {      // read hit
                 state_rd = RH;
                 ret_block = Set[_indx].Block[i].content;
                 return state_rd;
@@ -195,42 +197,42 @@ public:
             state_rd = RM;
         }
         return state_rd;
-    };
+    }
 
     int allocate(uint32_t _indx, uint32_t _tag, vector<uint8_t> _data) {
         uint32_t evi_indx;
         uint32_t way;
 
         for (way = 0; way < Set[_indx].getSize(); way++) {        // looking for empty way
-            if (!Set[_indx].Block[way].isVaild()) {
+            if (!Set[_indx].Block[way].isValid()) {
                 Set[_indx].Block[way].setContent(_data);
                 Set[_indx].Block[way].setTag(_tag);
-                Set[_indx].Block[way].setVaild();
+                Set[_indx].Block[way].setValid();
                 Set[_indx].Block[way].resetDirty();
                 return NA;
             }
         }
 
         evi_indx = Set[_indx].getEvi_indx();        // if no empty ways
-        if (Set[_indx].Block[evi_indx].isDirty()) {         // while allocating, isVaild or not doesn't matter at all
+        if (Set[_indx].Block[evi_indx].isDirty()) {         // while allocating, isValid or not doesn't matter at all
             ret_block = Set[_indx].Block[evi_indx].getContent();
             ret_tag = Set[_indx].Block[evi_indx].getTag();
 
             Set[_indx].Block[evi_indx].setContent(_data);
             Set[_indx].Block[evi_indx].setTag(_tag);
-            Set[_indx].Block[evi_indx].setVaild();
+            Set[_indx].Block[evi_indx].setValid();
             Set[_indx].Block[evi_indx].resetDirty();
 
             return EV;
         } else {
             Set[_indx].Block[evi_indx].setContent(_data);
             Set[_indx].Block[evi_indx].setTag(_tag);
-            Set[_indx].Block[evi_indx].setVaild();
+            Set[_indx].Block[evi_indx].setValid();
             Set[_indx].Block[evi_indx].resetDirty();
 
             return NA;
         }
-    };
+    }
 
     int write(uint32_t _indx, uint32_t _tag, uint32_t _offset, vector<uint8_t> _data) {
         uint32_t way, i;
@@ -238,7 +240,7 @@ public:
 
         state_wrt = WM;
         for (way = 0; way < Set[_indx].getSize(); way++) {
-            if (Set[_indx].Block[way].getTag() == _tag && Set[_indx].Block[way].isVaild()) {      // write hit
+            if (Set[_indx].Block[way].getTag() == _tag && Set[_indx].Block[way].isValid()) {      // write hit
                 state_wrt = WH;
                 break;
             }
@@ -249,8 +251,8 @@ public:
             len_data = (int) _data.size();
             _offset /= len_data;
             _offset *= len_data;        // find the starting offset of the data block
-            for (i = 0; i<len_data;i++){
-                Set[_indx].Block[way].content[_offset+i] = _data[i];
+            for (i = 0; i < len_data; i++) {
+                Set[_indx].Block[way].content[_offset + i] = _data[i];
             }
         }
         // otherwise, read miss
@@ -260,13 +262,12 @@ public:
     void resetState(char wr) {
         if (wr == 'w') {
             state_wrt = NA;
-        }
-        else if (wr == 'r') {
+        } else if (wr == 'r') {
             state_rd = NA;
         }
 //        ret_block.assign((unsigned long) Set->Block->getSize(), 0);
 //        ret_tag = 0;
-    };
+    }
 
     int getState(char wr) {
         int tmp_state;
@@ -274,27 +275,27 @@ public:
         resetState('r');
         resetState('w');
         return tmp_state;
-    };
+    }
 
     int getBlockbits() {
         return blockbits;
-    };
+    }
 
     int getIndexbits() {
         return indexbits;
-    };
+    }
 
     int getTagbits() {
         return tagbits;
-    };
+    }
 
     vector<uint8_t> getBlock() {
         return ret_block;
-    };
+    }
 
     bitset<32> getEVTag() {
         return ret_tag;
-    };
+    }
 };
 
 class Cache {
@@ -303,32 +304,65 @@ private:
     int *blocksize;
     int *setsize;
     int maxLevel;
-    uint32_t * index, *tag, *offset;
+    bool configvalid;
+    uint32_t *index, *tag, *offset;
 
 public:
     CacheLevel *L;
 
     Cache(config _cfg, int _nLevel) {      // TODO rewrite struct config
-        L = new CacheLevel[_nLevel + 1];
-        maxLevel = _nLevel;
-        size = new int[_nLevel + 1];
-        blocksize = new int[_nLevel + 1];
-        setsize = new int[_nLevel + 1];
+        // check if the config is valid
+        configvalid = true;
+        // blocksize must be greater than 0 and power of 2
+        if (configvalid && (log2(_cfg.L1blocksize) != (int) log2(_cfg.L1blocksize))) configvalid = false;
+        if (configvalid && (log2(_cfg.L2blocksize) != (int) log2(_cfg.L2blocksize))) configvalid = false;
+        // setsize must be and power of 2 (can be 0)
+        if (configvalid && (log2(_cfg.L1setsize) != (int) log2(_cfg.L1setsize)) && (_cfg.L1setsize != 0))
+            configvalid = false;
+        if (configvalid && (log2(_cfg.L2setsize) != (int) log2(_cfg.L2setsize)) && (_cfg.L2setsize != 0))
+            configvalid = false;
+        // cache size must be non-zero and greater than setsize*blocksize
+        if (configvalid && (_cfg.L1size == 0)) configvalid = false;
+        if (configvalid && (_cfg.L2size == 0)) configvalid = false;
+        if (configvalid && (_cfg.L1size * 1024 < _cfg.L1setsize * _cfg.L1blocksize)) configvalid = false;
+        if (configvalid && (_cfg.L2size * 1024 < _cfg.L2setsize * _cfg.L2blocksize)) configvalid = false;
+        // L2's blocksize must be bigger than L1
+        if (configvalid && (_cfg.L2blocksize < _cfg.L1blocksize)) configvalid = false;
+
+        if (configvalid) {
+            // if fully fully-associative
+            if (_cfg.L1setsize == 0) {
+                _cfg.L1setsize = _cfg.L1size*1024/_cfg.L1blocksize;
+            }
+            if (_cfg.L2setsize == 0) {
+                _cfg.L2setsize = _cfg.L2size*1024/_cfg.L2blocksize;
+            }
+
+            L = new CacheLevel[_nLevel + 1];
+            maxLevel = _nLevel;
+            size = new int[_nLevel + 1];
+            blocksize = new int[_nLevel + 1];
+            setsize = new int[_nLevel + 1];
 //        for (uint32_t i=0; i<_nLevel; i++) {
 //            L[i].setLevelsize(_cfg[i]);
 //            size = _cfg[i].size;
 //            blocksize = cfg[i].blocksize;
 //            setsize = cfg[i].setsize;
 //        }
-        L[0].setLevelsize(1, 1, 1);
-        L[1].setLevelsize(_cfg.L1size * 1024, _cfg.L1blocksize, _cfg.L1setsize);
-        L[2].setLevelsize(_cfg.L2size * 1024, _cfg.L2blocksize, _cfg.L2setsize);
+            L[0].setLevelsize(1, 1, 1);
+            L[1].setLevelsize(_cfg.L1size * 1024, _cfg.L1blocksize, _cfg.L1setsize);
+            L[2].setLevelsize(_cfg.L2size * 1024, _cfg.L2blocksize, _cfg.L2setsize);
 
-        index = new uint32_t[_nLevel+1];
-        tag = new uint32_t[_nLevel+1];
-        offset = new uint32_t[_nLevel+1];
+            index = new uint32_t[_nLevel + 1];
+            tag = new uint32_t[_nLevel + 1];
+            offset = new uint32_t[_nLevel + 1];
 
-        offset[0] = 0;
+            offset[0] = 0;
+        }
+    }
+
+    bool isConfigValid() {
+        return configvalid;
     }
 
     void resolveAddr(bitset<32> _addr, int n) {
@@ -343,13 +377,14 @@ public:
         bitset<32> mask_index(0); // bits of Ln cache index
         for (; i < L[n].getBlockbits() + L[n].getIndexbits(); i++)
             mask_index.set((size_t) i);
-        index[n] = (uint32_t) ((_addr & mask_index)>>L[n].getBlockbits()).to_ulong();      // get current level offset
+        index[n] = (uint32_t) ((_addr & mask_index) >> L[n].getBlockbits()).to_ulong();      // get current level offset
 
         // get index
         bitset<32> mask_tag(0); // bits of Ln cache index
         for (; i < L[n].getBlockbits() + L[n].getIndexbits() + L[n].getTagbits(); i++)
             mask_tag.set((size_t) i);
-        tag[n] = (uint32_t) ((_addr & mask_tag)>>(L[n].getBlockbits() + L[n].getIndexbits())).to_ulong();      // get current level offset
+        tag[n] = (uint32_t) ((_addr & mask_tag)
+                >> (L[n].getBlockbits() + L[n].getIndexbits())).to_ulong();      // get current level offset
 
     }
 
@@ -385,13 +420,13 @@ public:
                 }
                 // if no data evicted, nothing to do
             }
-            vector<uint8_t>::iterator it_first = recv_block.begin() + offset[n] - offset[n-1];
+            vector<uint8_t>::iterator it_first = recv_block.begin() + offset[n] - offset[n - 1];
             vector<uint8_t>::iterator it_last = it_first + pow(2, L[n - 1].getBlockbits());
             ret_block.assign(it_first, it_last);
 
             return ret_block;
         }
-    };
+    }
 
     void write(bitset<32> _addr, vector<uint8_t> _data, int n = 1) {
         int ret;                    // returned block of data
@@ -406,12 +441,12 @@ public:
             // write access
             ret = L[n].write(index[n], tag[n], offset[n], _data);
             if (ret == WM) {            // if write miss, nothing to do
-                write(_addr, _data, n+1);
+                write(_addr, _data, n + 1);
             }
             // if write hit, nothing to do
             return;
         }
-    };
+    }
 };
 
 int main(int argc, char *argv[]) {
@@ -440,7 +475,7 @@ int main(int argc, char *argv[]) {
     Cache myCache(cacheconfig, 2);
     vector<uint8_t> dummydata, retdata;
     dummydata.assign(1, 0x12);
-    int debug_cnt=1;
+    int debug_cnt = 1;
 
     int L1AcceState = 0; // L1 access state variable, can be one of NA, RH, RM, WH, WM;
     int L2AcceState = 0; // L2 access state variable, can be one of NA, RH, RM, WH, WM;
@@ -461,44 +496,51 @@ int main(int argc, char *argv[]) {
     bitset<32> accessaddr; // the address from the memory trace store in the bitset;
 
     if (traces.is_open() && tracesout.is_open()) {
-        while (getline(traces, line)) {   // read mem access file and access Cache
 
-            istringstream iss(line);
-            if (!(iss >> accesstype >> xaddr)) { break; }
-            stringstream saddr(xaddr);
-            saddr >> std::hex >> addr;
-            accessaddr = bitset<32>(addr);
+        if (myCache.isConfigValid()) {
+            while (getline(traces, line)) {   // read mem access file and access Cache
 
-            debug_cnt++;
-            if (debug_cnt == 1586)
-                debug_cnt = debug_cnt;
+                istringstream iss(line);
+                if (!(iss >> accesstype >> xaddr)) { break; }
+                stringstream saddr(xaddr);
+                saddr >> std::hex >> addr;
+                accessaddr = bitset<32>(addr);
 
-            // access the L1 and L2 Cache according to the trace;
-            if (accesstype.compare("R") == 0) {
-                //Implement by you:
-                // read access to the L1 Cache,
-                //  and then L2 (if required),
-                //  update the L1 and L2 access state variable;
-                retdata = myCache.read(accessaddr);
-                L1AcceState = myCache.L[1].getState('r');
-                L2AcceState = myCache.L[2].getState('r');
+#ifdef DEBUG
+                debug_cnt++;
+                if (debug_cnt == 1586)
+                    debug_cnt = debug_cnt;
+#endif
 
-            } else {
-                //Implement by you:
-                // write access to the L1 Cache,
-                //and then L2 (if required),
-                //update the L1 and L2 access state variable;
-                myCache.write(accessaddr, dummydata);
-                L1AcceState = myCache.L[1].getState('w');
-                L2AcceState = myCache.L[2].getState('w');
+                // access the L1 and L2 Cache according to the trace;
+                if (accesstype.compare("R") == 0) {
+                    // Implement by you:
+                    // read access to the L1 Cache,
+                    // and then L2 (if required),
+                    // update the L1 and L2 access state variable;
+                    retdata = myCache.read(accessaddr);
+                    L1AcceState = myCache.L[1].getState('r');
+                    L2AcceState = myCache.L[2].getState('r');
 
+                } else {
+                    // Implement by you:
+                    // write access to the L1 Cache,
+                    // and then L2 (if required),
+                    // update the L1 and L2 access state variable;
+                    myCache.write(accessaddr, dummydata);
+                    L1AcceState = myCache.L[1].getState('w');
+                    L2AcceState = myCache.L[2].getState('w');
+
+                }
+
+
+                tracesout << L1AcceState << " " << L2AcceState
+                          << endl;  // Output hit/miss results for L1 and L2 to the output file;
             }
-
-
-            tracesout << L1AcceState << " " << L2AcceState
-                      << endl;  // Output hit/miss results for L1 and L2 to the output file;
-
-
+        }
+        else {
+            tracesout << "configuration invalid"
+                      << endl;
         }
         traces.close();
         tracesout.close();

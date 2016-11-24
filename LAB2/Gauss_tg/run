@@ -1,2 +1,3 @@
+#!/bin/sh
 ./cachesimulator cacheconfig.txt trace.txt
 less trace.txt.out

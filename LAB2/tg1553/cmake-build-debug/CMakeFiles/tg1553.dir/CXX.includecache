@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/koala/Dropbox/NYU/Classes/CA/HW&LAB/LAB2/tg1553/cachesimulator.cpp
+iostream
+-
+fstream
+-
+string
+-
+sstream
+-
+vector
+-
+iomanip
+-
+stdlib.h
+-
+cmath
+-
+cstdio
+-
+bitset
+-
+stdint.h
+-
+
