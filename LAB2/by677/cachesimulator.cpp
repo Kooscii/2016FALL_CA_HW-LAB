@@ -72,6 +72,11 @@ public:
     virtual void writeAccess(u32 address);
     bool canHit(u32 address);
 
+    // Get specific part of address
+    u32 addressTag(u32 address);
+    u32 addressIndex(u32 address);
+    u32 addressOffset(u32 address);
+
 protected:
     // primitive property
     int m_blockBytes;
@@ -92,11 +97,6 @@ protected:
     unsigned *m_tagArray;
     unsigned *m_validArray;
 
-    // Get specific part of address
-    u32 addressTag(u32 address);
-    u32 addressIndex(u32 address);
-    u32 addressOffset(u32 address);
-
     // Helper functions for public interface
     void setupAddressRelatedVars();
     void writeBack(u32 index);
@@ -108,7 +108,11 @@ class Cache: public DataStorage{
 public:
     Cache(int blockSize, int setSize, int size, DataStorage *nextLevel=NULL);
     ~Cache(){ delete[] m_ways;}
-    int counter(){ return m_counter=((m_counter==m_setSize-1)?0:m_counter+1);}
+    int counter(int index){
+        int count=m_counter[index];
+        m_counter[index]=((m_counter[index]==m_setSize-1)?0:m_counter[index]+1);
+        return count;
+    }
     void resetNextLevel() { m_nextLevel->reset();}
     virtual void readAccess(u32 address);
     virtual void writeAccess(u32 address);
@@ -119,10 +123,12 @@ protected:
     int m_size;
     DataStorage *m_nextLevel;
     CacheWay *m_ways;
-    int m_counter; // round-robin counter, must be init to -1
+    int* m_counter; // round-robin counter,
 
     void createAndInitWays(int ways, int wayBlockBytes, int wayBlockCounts);
-    int addressWay(u32 address);
+    int addressWayShared(u32 address);
+    int readAddressWay(u32 address);
+    int writeAddressWay(u32 address);
     void emitNextLevelRead(u32 address);
     void emitNextLevelWrite(u32 address);
 };
@@ -256,25 +262,46 @@ bool CacheWay::canHit(u32 address){
 void Cache::createAndInitWays(int ways, int wayBlockBytes, int wayBlockCounts)
 {
     reset();
-    m_counter=-1;
+    m_counter=new int[wayBlockCounts];
     m_ways=new CacheWay[ways];
     for(int i=0;i<ways;i++){
+        m_counter[i]=0;
         m_ways[i].initCacheWay(wayBlockBytes,wayBlockCounts);
     }
 }
-
-inline int Cache::addressWay(u32 address){
+int Cache::addressWayShared(u32 address){
+    // if hit, directly return the way contains data
     for(int i=0;i<m_setSize;i++){
         if(m_ways[i].canHit(address)){
             return i;
         }
     }
+    // if not hit and has empty way, return the next empty way
     for(int i=0;i<m_setSize;i++){
         if(m_ways[i].empty(address)){
             return i;
         }
     }
-    return counter();
+    return -1;
+}
+
+inline int Cache::writeAddressWay(u32 address){
+    int way=addressWayShared(address);
+    if (way>=0) {
+        return way;
+    }  else {
+        return 0;
+    }
+}
+
+inline int Cache::readAddressWay(u32 address){
+    int way=addressWayShared(address);
+    // not hit and no empty way, return way indicate by round-rubin counter
+    if (way>=0) {
+        return way;
+    }  else {
+        return counter(m_ways[0].addressIndex(address));
+    }
 }
 
 Cache::Cache(int blockSize, int setSize, int size, DataStorage *nextLevel):
@@ -284,7 +311,7 @@ Cache::Cache(int blockSize, int setSize, int size, DataStorage *nextLevel):
 }
 
 void Cache::readAccess(u32 address){
-    int way=addressWay(address);
+    int way=readAddressWay(address);
     m_ways[way].readAccess(address);
     m_status=m_ways[way].status();
     if(m_status==RM){
@@ -295,7 +322,7 @@ void Cache::readAccess(u32 address){
 }
 
 void Cache::writeAccess(u32 address){
-    int way=addressWay(address);
+    int way=writeAddressWay(address);
     m_ways[way].writeAccess(address);
     m_status=m_ways[way].status();
     if(m_status==WM){
