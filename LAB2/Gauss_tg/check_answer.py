@@ -44,6 +44,7 @@ indexbits2 = int(log(L2size * 1024 / L2setsize, 2) - offsetbits2)
 tagbits2 = int(32 - indexbits2 - offsetbits2)
 
 op = []
+addr_hex = []
 L1_tag = []
 L1_index = []
 L2_tag = []
@@ -57,8 +58,8 @@ for line in f:
     L2.append(state[int(gline[2])])
 
     op.append(line[0])
-    addr_hex = line[4:-1]
-    addr_bin = bin(int(addr_hex, 16))[2:].zfill(32)
+    addr_hex.append(line[4:-1])
+    addr_bin = bin(int(addr_hex[-1], 16))[2:].zfill(32)
     L1_tag.append(int(addr_bin[0:tagbits1].zfill(32), 2))
     L1_index.append(int(addr_bin[tagbits1:tagbits1 + indexbits1].zfill(32), 2))
     L1_offset = int(addr_bin[tagbits1 + indexbits1:].zfill(32), 2)
@@ -67,7 +68,7 @@ for line in f:
     L2_offset = int(addr_bin[tagbits2 + indexbits2:].zfill(32), 2)
 
     o.write('%s 0x%s L1: %10s %8s %6s %4s  L2:  %10s %8s %6s %4s\n' %
-            (op[-1], addr_hex.zfill(8), str(L1_tag[-1]), str(L1_index[-1]),
+            (op[-1], addr_hex[-1].zfill(8), str(L1_tag[-1]), str(L1_index[-1]),
              str(L1_offset), L1[-1], str(L2_tag[-1]), str(L2_index[-1]),
              str(L2_offset), L2[-1]))
 
@@ -81,7 +82,7 @@ v2 = dict()
 evi1 = dict()
 evi2 = dict()
 
-o2.write(',,,L1,,after accessed,')
+o2.write(',,,,L1,,after accessed,')
 if L1setsize > 16:
     o2.write(',')
 else:
@@ -93,7 +94,7 @@ if L2setsize > 16:
 else:
     o2.write(',' * L2setsize + ',,\n')
 
-o2.write('%s,%s,%s,%s,%s,%s,' % ('no', 'check', 'R/W', 'index', 'tag', 'evicted'))
+o2.write('%s,%s,%s,%s,%s,%s,%s,' % ('no', 'check', 'R/W', 'addr', 'index', 'tag', 'evicted'))
 if L1setsize > 16:
     o2.write('ways,')
 else:
@@ -109,7 +110,7 @@ o2.write('%s,%s,\n' % ('expect', 'answer'))
 
 all_correct = True
 for i in range(0, n):
-    loading = 'Checked: %d/%d'%(i,n)
+    loading = 'Checked: %d/%d'%(i+1,n)
     print (loading, end='\r')
 
     flag1 = 0
@@ -185,7 +186,7 @@ for i in range(0, n):
     #     i, chk, op[i], L1_index[i], L1_tag[i], set1[0], expc1, L1[i]))
     # o2.write('%d,%d,%d,%d,%d,%d,%s,%s,\n' % (
     #     L2_index[i], L2_tag[i], set2[0], set2[1], set2[2], set2[3], expc2, L2[i]))
-    o2.write('%d,%s,%s,%d,%d,%d,' % (i, chk, op[i], L1_index[i], L1_tag[i], evi1[L1_index[i]]))
+    o2.write('%d,%s,%s,%s,%d,%d,%d,' % (i, chk, op[i], '0x'+addr_hex[i].zfill(8), L1_index[i], L1_tag[i], evi1[L1_index[i]]))
     if L1setsize > 16:
         o2.write('too many,')
     else:

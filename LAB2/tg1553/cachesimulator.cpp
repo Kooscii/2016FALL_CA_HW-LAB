@@ -18,6 +18,8 @@ s = log2(#sets)   b = log2(block size)  t=32-s-b
 #include <bitset>
 #include <stdint.h>
 
+// #define DEBUG
+
 using namespace std;
 //access state:
 #define NA 0    // no action
@@ -475,7 +477,7 @@ int main(int argc, char *argv[]) {
     Cache myCache(cacheconfig, 2);
     vector<uint8_t> dummydata, retdata;
     dummydata.assign(1, 0x12);
-    int debug_cnt = 1;
+    int debug_cnt = 0;
 
     int L1AcceState = 0; // L1 access state variable, can be one of NA, RH, RM, WH, WM;
     int L2AcceState = 0; // L2 access state variable, can be one of NA, RH, RM, WH, WM;
@@ -508,7 +510,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef DEBUG
                 debug_cnt++;
-                if (debug_cnt == 1586)
+                if (debug_cnt == 13663)
                     debug_cnt = debug_cnt;
 #endif
 
