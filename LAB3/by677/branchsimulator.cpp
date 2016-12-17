@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
 
 #define STRONGLY_TAKEN 0x3
 #define STRONGLY_NOT_TAKEN 0x0
@@ -10,8 +11,8 @@
 
 using namespace std;
 
-void predicate(int m, unsigned inst, unsigned short counters[], ofstream outFile)
-void update(int m, unsigned inst, unsigned short counters[], int taken)
+void predicate(int m, unsigned inst, unsigned counters[], ofstream &outFile);
+void update(int m, unsigned inst, unsigned counters[], int taken);
 
 int main(int argc, char *argv[])
 {
@@ -22,9 +23,9 @@ int main(int argc, char *argv[])
     ofstream outFile;
     unsigned inst = 0;
     int taken = 0;
-    unsigned short * counters;
+    unsigned * counters;
 
-    if(argc!=2){
+    if(argc!=3){
         cerr << "Usage: branchsimulator.out config.txt trace.txt" << endl;
         exit(1);
     }
@@ -36,8 +37,8 @@ int main(int argc, char *argv[])
         cerr << "Unable to open config file."<<endl;
         exit(2);
     }
-    unsigned long counts=1u<<(m-1);
-    counters = new unsigned short[counts];
+    unsigned counts=1u<<m;
+    counters = new unsigned[counts];
     for(unsigned i=0;i<counts;i++){
         counters[i]=STRONGLY_TAKEN;
     }
@@ -46,7 +47,11 @@ int main(int argc, char *argv[])
     outFile.open("trace.txt.out");
     if(traceFile.is_open() && outFile.is_open()){
         while(!traceFile.eof()){
-            traceFile>>inst>>taken;
+	    traceFile>>hex>>inst>>taken;
+	    // without this, the last line will be process twice
+	    if(traceFile.eof()){
+	        break;
+	    }
             predicate(m, inst, counters, outFile);
             update(m, inst, counters, taken);
         }
@@ -62,10 +67,10 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void predicate(int m, unsigned inst, unsigned short counters[], ofstream outFile)
+void predicate(int m, unsigned inst, unsigned counters[], ofstream &outFile)
 {
     unsigned index = inst & ((1u<<m)-1);
-    unsigned short counter = counters[index];
+    unsigned counter = counters[index];
     switch(counter){
     case STRONGLY_TAKEN:
     case WEAKLY_TAKEN:
@@ -81,10 +86,10 @@ void predicate(int m, unsigned inst, unsigned short counters[], ofstream outFile
     }
 }
 
-void update(int m, unsigned inst, unsigned short counters[], int taken)
+void update(int m, unsigned inst, unsigned counters[], int taken)
 {
     unsigned index = inst & ((1u<<m)-1);
-    unsigned short counter = counters[index];
+    unsigned counter = counters[index];
     if(taken==TAKEN){
         switch(counter){
         case STRONGLY_TAKEN:
