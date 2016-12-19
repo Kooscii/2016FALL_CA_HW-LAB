@@ -1,0 +1,3 @@
+C:/Users/mushk/Dropbox/NYU/Classes/CA/HW&LAB/LAB1/tg1553/cmake-build-debug/CMakeFiles/tg1553.dir
+C:/Users/mushk/Dropbox/NYU/Classes/CA/HW&LAB/LAB1/tg1553/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/mushk/Dropbox/NYU/Classes/CA/HW&LAB/LAB1/tg1553/cmake-build-debug/CMakeFiles/rebuild_cache.dir
